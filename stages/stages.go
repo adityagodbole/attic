@@ -99,48 +99,37 @@ func (st *StageResultWriter) Bookmark(data interface{}) {
 }
 
 type Stages struct {
-	id         string
 	syncer     Syncer
 	stages     []*Stage
-	seed       interface{}
 	lastResult *StageResult
 }
 
-func makeStages(syncer Syncer) *Stages {
+func Init(syncer Syncer) *Stages {
 	return &Stages{
 		syncer: syncer,
 		stages: []*Stage{},
 	}
 }
 
-func (st *Stages) Stage(name string, fn StageHandler) *Stages {
+func (st *Stages) Then(name string, fn StageHandler) *Stages {
 	stage := Stage{
 		name:    name,
 		handler: fn,
-		//		result:  &StageResult{Status: "init"},
 	}
 	st.stages = append(st.stages, &stage)
 	return st
 }
 
-func (st *Stages) WithID(id string) *Stages {
-	stages := *st
-	stages.id = id
-	return &stages
+func (st *Stages) Add(name string, fn StageHandler) *Stages {
+	return st.Then(name, fn)
 }
 
-func (st *Stages) WithSeed(seed interface{}) *Stages {
-	stages := *st
-	stages.seed = seed
-	return &stages
-}
-
-func (st *Stages) Run() error {
-	syncData, err := st.syncer.GetAll(st.id)
+func (st *Stages) Run(id string, seed interface{}) error {
+	syncData, err := st.syncer.GetAll(id)
 	if err != nil {
 		return errors.Wrap(err, "Cannot fetch synced data")
 	}
-	prevResult := &StageResult{Data: st.seed}
+	prevResult := &StageResult{Data: seed}
 	for _, stage := range st.stages {
 		syncedStageResult, ok := syncData[stage.name]
 		if !ok {
@@ -151,13 +140,13 @@ func (st *Stages) Run() error {
 			continue
 		}
 		stageResultWriter := &StageResultWriter{}
-		if err := stage.handler(stageResultWriter, prevResult.Data, st.seed); err != nil {
+		if err := stage.handler(stageResultWriter, prevResult.Data, seed); err != nil {
 			return err
 		}
 		stageResult := stageResultWriter.result
 		stageResult.Status = "done"
 		prevResult = &stageResult
-		if err := st.syncer.Set(st.id, stage.name, &stageResult); err != nil {
+		if err := st.syncer.Set(id, stage.name, &stageResult); err != nil {
 			return errors.Wrap(err, "Cannot sync state result")
 		}
 		if stageResultWriter.bookmark {
@@ -172,46 +161,50 @@ func (st *Stages) Result() interface{} {
 	return st.lastResult.Data
 }
 
-var defaultSt *Stages
-var defaultStOnce sync.Once
+var testSt *Stages
+var testOnce sync.Once
 
-func setDefaultStages() {
-	defaultSt = makeStages(newRedisSync())
-	defaultSt.Stage("first", func(rw ResultWriter, data, seed interface{}) error {
-		log.Println("executing first stage")
-		str, ok := data.(string)
-		if !ok {
-			return errors.New("Cannot read input data")
-		}
-		rw.Set(str + "first")
-		return nil
-	}).Stage("second", func(rw ResultWriter, data, seed interface{}) error {
-		log.Println("executing second stage")
-		str, ok := data.(string)
-		if !ok {
-			return errors.New("Cannot read input data")
-		}
-		rw.Set(str + "second")
-		return nil
-	}).Stage("third", func(rw ResultWriter, data, seed interface{}) error {
-		log.Println("executing third stage")
-		str, ok := data.(string)
-		if !ok {
-			return errors.New("Cannot read input data")
-		}
-		rw.Set(str + "third")
-		return nil
-	})
+func makeTestStages(syncer Syncer) *Stages {
+	return Init(syncer).
+		Then("first", func(rw ResultWriter, data, seed interface{}) error {
+			log.Println("executing first stage")
+			str, ok := data.(string)
+			if !ok {
+				return errors.New("Cannot read input data")
+			}
+			rw.Set(str + "first")
+			return nil
+		}).
+		Then("second", func(rw ResultWriter, data, seed interface{}) error {
+			log.Println("executing second stage")
+			str, ok := data.(string)
+			if !ok {
+				return errors.New("Cannot read input data")
+			}
+			rw.Set(str + "second")
+			return nil
+		}).
+		Then("third", func(rw ResultWriter, data, seed interface{}) error {
+			log.Println("executing third stage")
+			str, ok := data.(string)
+			if !ok {
+				return errors.New("Cannot read input data")
+			}
+			rw.Set(str + "third")
+			return nil
+		})
 }
 
-func defaultStages() *Stages {
-	defaultStOnce.Do(setDefaultStages) // cache
-	return defaultSt                   // and return
+func testStages(syncer Syncer) *Stages {
+	testOnce.Do(func() {
+		testSt = makeTestStages(syncer)
+	}) // cache
+	return testSt // and return
 }
 
 func main() {
-	st := defaultStages().WithID("random-id1").WithSeed("seed")
-	err := st.Run()
+	st := testStages(newRedisSync())
+	err := st.Run("random-id1", "seed")
 	if err != nil {
 		log.Printf("Top level error = %+v\n", err)
 		return
