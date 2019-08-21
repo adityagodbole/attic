@@ -5,22 +5,32 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
 )
 
-type RedisSync struct {
+/////// Syncer /////////////////
+
+type Syncer interface {
+	Set(id, stage string, result *StageResult) error
+	Get(id, stage string) (*StageResult, error)
+	GetAll(id string) (map[string]*StageResult, error)
+	Lock(id, stage string, ttl time.Duration) (bool, error)
+	Unlock(id, stage string) error
+}
+type RedisSyncer struct {
 	redis *redis.Client
 }
 
-func newRedisSync() *RedisSync {
-	return &RedisSync{
+func newRedisSyncer() *RedisSyncer {
+	return &RedisSyncer{
 		redis: redis.NewClient(&redis.Options{}),
 	}
 }
 
-func (r *RedisSync) Set(id, stage string, res *StageResult) error {
+func (r *RedisSyncer) Set(id, stage string, res *StageResult) error {
 	syncData, err := r.GetAll(id)
 	if err != nil {
 		return err
@@ -34,7 +44,7 @@ func (r *RedisSync) Set(id, stage string, res *StageResult) error {
 	return nil
 }
 
-func (r *RedisSync) Get(id, stage string) (*StageResult, error) {
+func (r *RedisSyncer) Get(id, stage string) (*StageResult, error) {
 	data, err := r.GetAll(id)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error getting stage data")
@@ -43,7 +53,7 @@ func (r *RedisSync) Get(id, stage string) (*StageResult, error) {
 	return stageData, nil
 }
 
-func (r *RedisSync) GetAll(id string) (map[string]*StageResult, error) {
+func (r *RedisSyncer) GetAll(id string) (map[string]*StageResult, error) {
 	data := make(map[string]*StageResult)
 	v, err := r.redis.Get(r.makeKey(id)).Result()
 	if err != nil {
@@ -58,16 +68,26 @@ func (r *RedisSync) GetAll(id string) (map[string]*StageResult, error) {
 	}
 	return data, nil
 }
-func (r *RedisSync) makeKey(s string) string {
+
+func (r *RedisSyncer) Lock(id, stage string, ttl time.Duration) (bool, error) {
+	key := r.makeKey(id)
+	res := r.redis.SetNX(key, true, ttl)
+	return true, res.Err()
+}
+
+func (r *RedisSyncer) Unlock(id, stage string) error {
+	key := r.makeKey(id)
+	res := r.redis.Del(key)
+	return res.Err()
+}
+
+func (r *RedisSyncer) makeKey(s string) string {
 	return "stages-" + s
 }
 
-type Syncer interface {
-	Set(id, stage string, result *StageResult) error
-	Get(id, stage string) (*StageResult, error)
-	GetAll(id string) (map[string]*StageResult, error)
-}
+/////////////// Syncer end /////////////////////
 
+////////////// Stage Result ///////////////////
 type StageResult struct {
 	Data   interface{}
 	Status string
@@ -75,13 +95,7 @@ type StageResult struct {
 
 type ResultWriter interface {
 	Set(data interface{})
-}
-type StageHandler func(rw ResultWriter, data interface{}, seed interface{}) error
-
-type Stage struct {
-	name string
-	//	result  *StageResult
-	handler StageHandler
+	Bookmark(data interface{})
 }
 
 type StageResultWriter struct {
@@ -98,12 +112,62 @@ func (st *StageResultWriter) Bookmark(data interface{}) {
 	st.bookmark = true
 }
 
+////////// Stage result end ////////////////
+
+////////// Single Stage /////////////////
+type StageHandler func(rw ResultWriter, data interface{}, seed interface{}) error
+
+type Stage struct {
+	name string
+	//	result  *StageResult
+	handler StageHandler
+	ttl     time.Duration
+}
+
+type StageConflictError error
+
+// executes stage and returns stageResult, bookmark and error
+func (stage *Stage) execStage(syncer Syncer, id string, input, seed interface{}) (*StageResult, bool, error) {
+	// Take exclusive lock
+	ok, err := syncer.Lock(id, stage.name, stage.ttl)
+	if err != nil {
+		return nil, false, StageConflictError(err)
+	}
+	if !ok {
+		return nil, false, StageConflictError(fmt.Errorf("Cannot get exclusive lock for %s:%s", stage, id))
+	}
+	defer func() {
+		if err := syncer.Unlock(id, stage.name); err != nil {
+			log.Printf("Cannot unset execution lock %+v", err)
+		}
+	}()
+
+	// execute stage
+	stageResultWriter := &StageResultWriter{}
+	if err := stage.handler(stageResultWriter, input, seed); err != nil {
+		return nil, false, err
+	}
+	stageResult := stageResultWriter.result
+	stageResult.Status = "done"
+	// sync stage data
+	if err := syncer.Set(id, stage.name, &stageResult); err != nil {
+		return nil, false, errors.Wrap(err, "Cannot sync state result")
+	}
+	return &stageResult, stageResultWriter.bookmark, nil
+}
+
+//////////// Single stage end ///////////
+
+////// Stages ////////////////////
+
+// Stages implements the functionality of idempotent stages
 type Stages struct {
 	syncer     Syncer
 	stages     []*Stage
 	lastResult *StageResult
 }
 
+// Initialise a Stages struct
 func Init(syncer Syncer) *Stages {
 	return &Stages{
 		syncer: syncer,
@@ -111,19 +175,23 @@ func Init(syncer Syncer) *Stages {
 	}
 }
 
-func (st *Stages) Then(name string, fn StageHandler) *Stages {
+// Then adds an idempotent step to a Stages object
+func (st *Stages) Then(name string, ttl time.Duration, fn StageHandler) *Stages {
 	stage := Stage{
 		name:    name,
 		handler: fn,
+		ttl:     ttl,
 	}
 	st.stages = append(st.stages, &stage)
 	return st
 }
 
-func (st *Stages) Add(name string, fn StageHandler) *Stages {
-	return st.Then(name, fn)
+// Add is an alias for Then
+func (st *Stages) Add(name string, ttl time.Duration, fn StageHandler) *Stages {
+	return st.Then(name, ttl, fn)
 }
 
+// Run executes the correct stage sequence depending on the current saves state
 func (st *Stages) Run(id string, seed interface{}) error {
 	syncData, err := st.syncer.GetAll(id)
 	if err != nil {
@@ -139,17 +207,12 @@ func (st *Stages) Run(id string, seed interface{}) error {
 			prevResult = syncedStageResult
 			continue
 		}
-		stageResultWriter := &StageResultWriter{}
-		if err := stage.handler(stageResultWriter, prevResult.Data, seed); err != nil {
-			return err
+		stageResult, bookmark, err := stage.execStage(st.syncer, id, prevResult.Data, seed)
+		if err != nil {
+			return errors.Wrapf(err, "Unable to execute stage %s:%s", stage.name, id)
 		}
-		stageResult := stageResultWriter.result
-		stageResult.Status = "done"
-		prevResult = &stageResult
-		if err := st.syncer.Set(id, stage.name, &stageResult); err != nil {
-			return errors.Wrap(err, "Cannot sync state result")
-		}
-		if stageResultWriter.bookmark {
+		prevResult = stageResult
+		if bookmark { // Bookmark is an explicit termination to be resumed later
 			break
 		}
 	}
@@ -161,12 +224,15 @@ func (st *Stages) Result() interface{} {
 	return st.lastResult.Data
 }
 
+/////////// Stages end //////////
+
+//////// Example /////////
 var testSt *Stages
 var testOnce sync.Once
 
-func makeTestStages(syncer Syncer) *Stages {
+func prepareTestStages(syncer Syncer) *Stages {
 	return Init(syncer).
-		Then("first", func(rw ResultWriter, data, seed interface{}) error {
+		Then("first", 1*time.Second, func(rw ResultWriter, data, seed interface{}) error {
 			log.Println("executing first stage")
 			str, ok := data.(string)
 			if !ok {
@@ -175,7 +241,7 @@ func makeTestStages(syncer Syncer) *Stages {
 			rw.Set(str + "first")
 			return nil
 		}).
-		Then("second", func(rw ResultWriter, data, seed interface{}) error {
+		Then("second", 1*time.Second, func(rw ResultWriter, data, seed interface{}) error {
 			log.Println("executing second stage")
 			str, ok := data.(string)
 			if !ok {
@@ -184,7 +250,7 @@ func makeTestStages(syncer Syncer) *Stages {
 			rw.Set(str + "second")
 			return nil
 		}).
-		Then("third", func(rw ResultWriter, data, seed interface{}) error {
+		Then("third", 1*time.Second, func(rw ResultWriter, data, seed interface{}) error {
 			log.Println("executing third stage")
 			str, ok := data.(string)
 			if !ok {
@@ -195,15 +261,15 @@ func makeTestStages(syncer Syncer) *Stages {
 		})
 }
 
-func testStages(syncer Syncer) *Stages {
+func makeTestStages(syncer Syncer) *Stages {
 	testOnce.Do(func() {
-		testSt = makeTestStages(syncer)
+		testSt = prepareTestStages(syncer)
 	}) // cache
 	return testSt // and return
 }
 
 func main() {
-	st := testStages(newRedisSync())
+	st := makeTestStages(newRedisSyncer())
 	err := st.Run("random-id1", "seed")
 	if err != nil {
 		log.Printf("Top level error = %+v\n", err)
