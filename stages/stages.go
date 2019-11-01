@@ -57,12 +57,10 @@ func (r *RedisSyncer) GetAll(id string) (map[string]*StageResult, error) {
 	data := make(map[string]*StageResult)
 	v, err := r.redis.Get(r.makeKey(id)).Result()
 	if err != nil {
-		return data, nil // return empty map if not found
-	}
-	bytes := []byte(v)
-	if err != nil {
 		return nil, errors.Wrap(err, "Cannot fetch all data for id:"+id)
 	}
+	bytes := []byte(v)
+
 	if err := json.Unmarshal(bytes, &data); err != nil {
 		return nil, errors.Wrap(err, "Cannot unmarshal stages data")
 	}
@@ -134,7 +132,7 @@ func (stage *Stage) execStage(syncer Syncer, id string, input, seed interface{})
 		return nil, false, StageConflictError(err)
 	}
 	if !ok {
-		return nil, false, StageConflictError(fmt.Errorf("Cannot get exclusive lock for %s:%s", stage, id))
+		return nil, false, StageConflictError(fmt.Errorf("cannot get exclusive lock for %s:%s", stage.name, id))
 	}
 	defer func() {
 		if err := syncer.Unlock(id, stage.name); err != nil {
