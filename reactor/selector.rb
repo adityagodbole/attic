@@ -3,15 +3,15 @@ require_relative 'wg'
 
 # Wrapper over TCPSocket
 class SSocket < TCPSocket
-  def do_read(max_bytes = 1024, &rdcb)
-    @readcb = rdcb
-    @max_bytes = max_bytes
-    @reactor.sched_read(self)
+  def bind_reactor(reactor)
+    @reactor = reactor # bind the socket to the reactor
+    self
   end
 
-  def bind_reactor(reactor)
-    @reactor = reactor
-    self
+  def async_read(max_bytes = 1024, &rdcb)
+    @readcb = rdcb # store reference to the callback
+    @max_bytes = max_bytes
+    @reactor.sched_read(self) # schedule a read call on the reactor
   end
 
   def read_and_callback
@@ -36,37 +36,40 @@ class Selector
   end
 
   def stop
-    @active = false
+    @active = false # set flag to stop run loop
   end
 
   def run
     @active = true
     loop do
-      break unless @active
+      break unless @active # check if we have received a stop
 
       readers = []
-      readers << @readq.pop until @readq.empty?
+      readers << @readq.pop until @readq.empty? # get all read requests from queue
+
       if readers.empty?
         sleep 1
         next
       end
-      rds, = IO.select(readers)
 
-      rds&.each { |r| r.read_and_callback }
-      remaining = readers - rds
+      readylist, = IO.select(readers) # wait till some readers have data
+
+      readylist&.each { |sock| sock.read_and_callback }
+
+      # reschedule readers who don't have data
+      remaining = readers - readylist
       remaining.each { |r| sched_read(r) }
     end
   end
 end
 
-def selector
-  count = 100
+def selector(count)
   wg = WaitGroup.new(count)
   r = Selector.new
   socks = (1..count).map { r.new_connection('127.0.0.1', '8888') }
   socks.each do |sock|
     sock.puts "hello"
-    sock.do_read do |resp|
+    sock.async_read do |resp|
       puts resp
       wg.done
     end
@@ -77,21 +80,7 @@ def selector
     r.stop
   end
   r.run
-  sleep 10
 end
 
-def blocking
-  threads = (1..100).map do
-    sock = TCPSocket.new('127.0.0.1', '8888')
-    sock.puts "hello"
-    Thread.new do
-      data = sock.recv(64)
-      puts data
-      sleep 10
-    end
-  end
-  threads.each(&:join)
-end
+selector(ARGV[0].to_i)
 
-#blocking
-selector
