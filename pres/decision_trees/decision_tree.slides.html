@@ -14099,17 +14099,57 @@ div.jp-OutputPrompt {
 <div class="slides"><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="A-(superficial)-introduction-to-Decision-trees-(or)">A (superficial) introduction to Decision trees (or)<a class="anchor-link" href="#A-(superficial)-introduction-to-Decision-trees-(or)">&#182;</a></h2><h3 id="You-too-can-predict-the-future-using-entropy-%F0%9F%98%AC">You too can predict the future using entropy &#128556;<a class="anchor-link" href="#You-too-can-predict-the-future-using-entropy-%F0%9F%98%AC">&#182;</a></h3><p>&nbsp;
+<h2 id="Decision-tress:-A-gentle-introduction-to-machine-learning">Decision tress: A gentle introduction to machine learning<a class="anchor-link" href="#Decision-tress:-A-gentle-introduction-to-machine-learning">&#182;</a></h2><p>&nbsp;
 &nbsp;</p>
-
-<pre><code>  Aditya Godbole, Oneirix Labs</code></pre>
+<h3 id="Aditya-Godbole,-Oneirix-Labs"><em>Aditya Godbole, Oneirix Labs</em><a class="anchor-link" href="#Aditya-Godbole,-Oneirix-Labs">&#182;</a></h3>
+</div>
+</div></section></section><section><section>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="Prelude">Prelude<a class="anchor-link" href="#Prelude">&#182;</a></h2><ul>
+<li>What to take away: A feel for what machine learning is<ul>
+<li>Some technical aspects and nuances will be skipped</li>
+</ul>
+</li>
+<li>There will be <em>math</em><ul>
+<li>$ +, -, \times, \frac{a}{b}, \sum, log$</li>
+<li>Feel free to gloss over the details</li>
+<li>Make sure you get the gist</li>
+</ul>
+</li>
+<li>Raise hand or type in chat to ask questions during the talk</li>
+</ul>
 
 </div>
 </div></section></section><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Some-basics">Some basics<a class="anchor-link" href="#Some-basics">&#182;</a></h2><figure>
-    <img src="ML_model_types.png" width="600px"/>
+<h2 id="Learning-vs-training">Learning vs training<a class="anchor-link" href="#Learning-vs-training">&#182;</a></h2><ul>
+<li>If you train, you can use it</li>
+<li>If you learn, you can teach it</li>
+</ul>
+<p>ML today is really machine "training"</p>
+
+</div>
+</div></section></section><section><section>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+<h2 id="Machine-learning-models">Machine learning models<a class="anchor-link" href="#Machine-learning-models">&#182;</a></h2><p><img src="ML_model.png" width="600px"/></p>
+<ul>
+<li>By looking at many samples of x and y, <em>figure out</em> a, b, c ...<ul>
+<li>Difference between training and programming</li>
+</ul>
+</li>
+<li>a, b, c, ... are called <em>hyper-parameters</em></li>
+</ul>
+
+</div>
+</div></section><section>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="Classes-of-models-(or-functions)">Classes of models (or functions)<a class="anchor-link" href="#Classes-of-models-(or-functions)">&#182;</a></h2><figure>
+    <img src="ML_model_types.png" width="800px"/>
     <figcaption>Types of ML models</figcaption>
  </figure>
 </div>
@@ -14117,18 +14157,19 @@ div.jp-OutputPrompt {
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h2 id="Development-cycle-of-a-model">Development cycle of a model<a class="anchor-link" href="#Development-cycle-of-a-model">&#182;</a></h2><p><img src="ML_train_test.png" width="600px"/></p>
-
+<h4 id="Strive-to-maximise-validation-accuracy">Strive to maximise validation accuracy<a class="anchor-link" href="#Strive-to-maximise-validation-accuracy">&#182;</a></h4>
 </div>
 </div></section></section><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Decision-trees">Decision trees<a class="anchor-link" href="#Decision-trees">&#182;</a></h2><h3 id="The-problem-statement">The problem statement<a class="anchor-link" href="#The-problem-statement">&#182;</a></h3><p>Lets say we have data in the following tabular format of <em>past</em> data indicating weather conditions and whether a game was played on that day or not</p>
+<hr>
+<h2 id="Decision-trees">Decision trees<a class="anchor-link" href="#Decision-trees">&#182;</a></h2><h3 id="The-problem-statement">The problem statement<a class="anchor-link" href="#The-problem-statement">&#182;</a></h3><p>Lets say we have data in a tabular format of <em>past</em> data indicating weather conditions and whether a game was played on that day or not</p>
 
 </div>
-</div></section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">inp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;data.csv&quot;</span><span class="p">)</span>
@@ -14148,7 +14189,7 @@ div.jp-OutputPrompt {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
 
 
 
@@ -14302,7 +14343,7 @@ div.jp-OutputPrompt {
 
 </div>
 
-</div></section></section><section><section>
+</div></div></section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>And we want to train a tree based model such that</p>
@@ -14322,17 +14363,18 @@ div.jp-OutputPrompt {
 </div></section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<hr>
 <h3 id="Considerations-for-building-the-tree-model">Considerations for building the tree model<a class="anchor-link" href="#Considerations-for-building-the-tree-model">&#182;</a></h3><ul>
-<li>For each node, which feature should we ask the question on?</li>
+<li>For each node, which feature should split on?</li>
 </ul>
-<p>Intuitively, a shorter tree is a better model and will generalise better.
-(We will see a more formal proof of this later).</p>
+<p>A shorter tree is a better model and will "generalise" better.</p>
+<blockquote><p>Generalise: Work as well with unseen data as with training data</p>
+</blockquote>
 <h3 id="So-we-want-to-prioritise-those-features-which-have-%22more-information%22">So we want to prioritise those features which have "more information"<a class="anchor-link" href="#So-we-want-to-prioritise-those-features-which-have-%22more-information%22">&#182;</a></h3><h3 id="A-feature-carries-more-information-if-it-separates-the-target-variable-better">A feature carries more information if it separates the target variable better<a class="anchor-link" href="#A-feature-carries-more-information-if-it-separates-the-target-variable-better">&#182;</a></h3>
 </div>
 </div></section></section><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><a id="The-problem-statement"></a></p>
 <hr>
 <h2 id="Entropy">Entropy<a class="anchor-link" href="#Entropy">&#182;</a></h2><p>From information theory, we have concept called <strong>entropy</strong></p>
 <ul>
@@ -14340,16 +14382,18 @@ div.jp-OutputPrompt {
 <li>entropy is higher if the data-set is more evenly spread</li>
 <li>entropy is lower if it is less evenly spread</li>
 </ul>
-<p>Consider a feature which has only two categories, like <code>Windy</code>. We will call these categories $\oplus$ and $\ominus$</p>
+<p>Consider a feature which has only two categories, like <em>Windy</em>. We will call these categories $\oplus$ and $\ominus$</p>
 <p>Then entropy of the feature</p>
 $$
 Entropy(S) = -p_\oplus log_2 p_\oplus -p_\ominus log_2 p_\ominus
-$$
+$$<blockquote><p>$p$: Proportion or probability</p>
+</blockquote>
+
 </div>
 </div></section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[78]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">windy</span> <span class="o">=</span> <span class="n">inp</span><span class="p">[</span><span class="s1">&#39;windy&#39;</span><span class="p">]</span>
@@ -14391,7 +14435,7 @@ e_windy=0.9852281360342515
 </div></section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[79]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">entropy</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
@@ -14438,14 +14482,14 @@ entropy(inp[&#39;play&#39;])=0.9402859586706311
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <hr>
-<h3 id="Entropy-wrt-target-(relative-entropy)">Entropy wrt target (relative entropy)<a class="anchor-link" href="#Entropy-wrt-target-(relative-entropy)">&#182;</a></h3>$$
+<h3 id="Entropy-wrt-target-(partitioned-entropy)">Entropy wrt target (partitioned entropy)<a class="anchor-link" href="#Entropy-wrt-target-(partitioned-entropy)">&#182;</a></h3>$$
 Entropy_{play}(windy) = p_{windy(\oplus)}(Entropy_{play} \forall windy \in \oplus) + p_{windy(\ominus)}(Entropy_{play} \forall windy \in \ominus)
 $$
 </div>
 </div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[80]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">play_windy_true</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">inp</span><span class="p">[</span><span class="s1">&#39;windy&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;play&#39;</span><span class="p">]</span>
@@ -14467,7 +14511,7 @@ $$
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[80]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
 
 
 
@@ -14485,12 +14529,12 @@ $$
 </div></div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[81]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">rel_entropy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">part_entropy</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">entropy</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">target</span><span class="p">])</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="n">rel_entropy</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="s1">&#39;windy&#39;</span><span class="p">,</span> <span class="s1">&#39;play&#39;</span><span class="p">)</span>
+<span class="n">part_entropy</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="s1">&#39;windy&#39;</span><span class="p">,</span> <span class="s1">&#39;play&#39;</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14506,7 +14550,7 @@ $$
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[81]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
 
 
 
@@ -14524,26 +14568,20 @@ $$
 </div></div></section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Information-gain">Information gain<a class="anchor-link" href="#Information-gain">&#182;</a></h2>$$
+<h2 id="Information-gain-from-partition">Information gain from partition<a class="anchor-link" href="#Information-gain-from-partition">&#182;</a></h2>$$
 Gain(Play, Windy) = Entropy_{play} - Entropy_{play}(windy)
-$$<h3 id="When-we-split-the-data-based-on-values-of-Windy">When we split the data based on values of Windy<a class="anchor-link" href="#When-we-split-the-data-based-on-values-of-Windy">&#182;</a></h3><ul>
+$$<ul>
 <li>What is the total entropy of Play for each node</li>
 <li>What is the sum of totals on entropy of each node</li>
 <li>How much lesser is it compared to the entropy prior to the split?</li>
 </ul>
-
-</div>
-</div></section><section>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p><img src="eg2.png" width="700px"/></p>
-<hr>
 
 </div>
-</div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div></section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[82]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">play</span> <span class="o">=</span> <span class="n">inp</span><span class="p">[</span><span class="s1">&#39;play&#39;</span><span class="p">]</span>
@@ -14580,20 +14618,19 @@ gain_humidity=0.15183550136234159
 
 </div>
 
-</div></div></section></section><section><section>
+</div></section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h3 id="To-select-the-feature-to-split-on-for-a-node">To select the feature to split on for a node<a class="anchor-link" href="#To-select-the-feature-to-split-on-for-a-node">&#182;</a></h3><ol>
-<li>Calculate relative entropies of target feature wrt to each input feature</li>
+<li>Calculate partitioned entropies of target feature wrt to each input feature</li>
 <li>Select the feature with maximum information gain</li>
 </ol>
-<hr>
 
 </div>
 </div></section></section><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Non-discrete-input-features">Non discrete input features<a class="anchor-link" href="#Non-discrete-input-features">&#182;</a></h3><ul>
+<h1 id="Non-discrete-input-features">Non discrete input features<a class="anchor-link" href="#Non-discrete-input-features">&#182;</a></h1><ul>
 <li>Non discrete features are handled by<ul>
 <li>Sorting the data by the feature values</li>
 <li>Find values for which target variable changes</li>
@@ -14636,13 +14673,12 @@ gain_humidity=0.15183550136234159
 </table>
 <p>Switches occur at Temperature = 60 and 90</p>
 <p>Category are therefore computed at $Temp = (48+60)/2$ and $Temp = (80+90)/2$</p>
-<hr>
 
 </div>
 </div></section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[67]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">inp_l</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">LabelEncoder</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">)</span>
@@ -14662,7 +14698,7 @@ gain_humidity=0.15183550136234159
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[67]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
 
 
 
@@ -14819,7 +14855,7 @@ gain_humidity=0.15183550136234159
 </div></section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[72]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">Y</span> <span class="o">=</span> <span class="n">inp_l</span><span class="p">[</span><span class="s1">&#39;play&#39;</span><span class="p">]</span>
@@ -14836,7 +14872,7 @@ gain_humidity=0.15183550136234159
 </div></section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[77]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">plt</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">plot_tree</span><span class="p">(</span><span class="n">clf</span><span class="p">)</span>
@@ -14874,9 +14910,14 @@ gain_humidity=0.15183550136234159
 </div></section></section><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Uses-of-decision-tree-classifiers">Uses of decision tree classifiers<a class="anchor-link" href="#Uses-of-decision-tree-classifiers">&#182;</a></h3><ol>
+<hr>
+<h2 id="Uses-of-decision-tree-classifiers">Uses of decision tree classifiers<a class="anchor-link" href="#Uses-of-decision-tree-classifiers">&#182;</a></h2><ol>
 <li>Building supervised classification models</li>
 <li>Deriving rules for unsupervised classification models</li>
+</ol>
+<h2 id="Simple-decision-trees-are-rarely-used">Simple decision trees are rarely used<a class="anchor-link" href="#Simple-decision-trees-are-rarely-used">&#182;</a></h2><ol>
+<li>Bagging technique: Many trees in parallel</li>
+<li>Boosting: Cascade of trees</li>
 </ol>
 
 </div>
@@ -14884,7 +14925,9 @@ gain_humidity=0.15183550136234159
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <hr>
-<h2 id="Decision-tree-regression">Decision tree regression<a class="anchor-link" href="#Decision-tree-regression">&#182;</a></h2><ul>
+<h2 id="Decision-tree-regression">Decision tree regression<a class="anchor-link" href="#Decision-tree-regression">&#182;</a></h2><blockquote><p>Regression: Predicting non-finite catoegories (real numbers)</p>
+</blockquote>
+<ul>
 <li>For classification: maximise information gain</li>
 <li>For regression: minimise standard deviation</li>
 </ul>
@@ -14896,7 +14939,10 @@ gain_humidity=0.15183550136234159
 <hr>
 <h2 id="Overfitting">Overfitting<a class="anchor-link" href="#Overfitting">&#182;</a></h2><p>Overfitting is a standard tradeoff in learning algorithms</p>
 <ul>
-<li>Tree can fit all seen data</li>
+<li>Tree can fit all seen data<ul>
+<li>Eg. A date feature</li>
+</ul>
+</li>
 <li>What about unseen data?<ul>
 <li>There is a tradeoff between accuracy of fitting training data vs accuracy of predicting unseen data</li>
 </ul>
@@ -14905,20 +14951,11 @@ gain_humidity=0.15183550136234159
 </ul>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-     </div>
+</div></section></section><section><section>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h1 id="Thank-you">Thank you<a class="anchor-link" href="#Thank-you">&#182;</a></h1><h2 id="Questions?">Questions?<a class="anchor-link" href="#Questions?">&#182;</a></h2>
 </div>
-</div>
-</div>
-
 </div></section></section>
 </div>
 </div>
