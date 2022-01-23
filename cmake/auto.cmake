@@ -91,7 +91,7 @@ function(autobuild)
 	endforeach()
 endfunction()
 
-function(use_gtest)
+macro(use_gtest)
 	include(FetchContent)
 	FetchContent_Declare(
 			googletest
@@ -100,5 +100,4 @@ function(use_gtest)
 	FetchContent_MakeAvailable(googletest)
 	include(GoogleTest)
 	enable_testing()
-	file(WRITE "${CMAKE_BINARY_DIR}/runtests.sh" "for i in `find ${CMAKE_BINARY_DIR} -perm +111 -type f -name 'test_*'`; do $i ; done")
-endfunction()
+endmacro()
