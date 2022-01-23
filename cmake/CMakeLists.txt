@@ -3,5 +3,5 @@ project(cpp)
 set(CMAKE_CXX_STANDARD 20)
 
 include(auto.cmake)
+use_gtest()
 autobuild()
-
