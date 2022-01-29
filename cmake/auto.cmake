@@ -11,6 +11,9 @@ MACRO(SUBDIRLIST result curdir)
 ENDMACRO()
 
 function(simple_build dir type)
+	unset(libs)
+	unset(deps)
+	unset(public_deps)
 	string(CONCAT scriptfile ${dir} "/" "build.cmake")
 	if(EXISTS "${PROJECT_SOURCE_DIR}/${scriptfile}")
 		include(${scriptfile})
@@ -78,7 +81,7 @@ function(simple_build dir type)
 	endif()
 endfunction()
 
-function(autobuild deps)
+function(autobuild conandeps)
 	if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 		message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
 		file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
@@ -88,7 +91,7 @@ function(autobuild deps)
 	endif()
 	set(_GLIBCXX_USE_CXX11_ABI 1)
 	include(${CMAKE_BINARY_DIR}/conan.cmake)
-	conan_cmake_configure(REQUIRES ${deps}
+	conan_cmake_configure(REQUIRES ${conandeps}
 			GENERATORS cmake_find_package)
 
 	conan_cmake_autodetect(settings)
