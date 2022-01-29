@@ -1,0 +1,4 @@
+cmake-build_debug/**
+.idea/**
+.vscode/**
+
