@@ -9,6 +9,7 @@
 
 namespace scope {
     // ScopeGuards
+    #if 0
     struct ScopeGuardBase {
         ScopeGuardBase():
             mActive(true)
@@ -25,21 +26,25 @@ namespace scope {
         ~ScopeGuardBase() = default;
         bool mActive;
     };
-
+    #endif
+    
     template<class Fun>
-    struct ScopeGuard: public ScopeGuardBase {
+    struct ScopeGuard {
         ScopeGuard() = delete;
         ScopeGuard(const ScopeGuard&) = delete;
 
         ScopeGuard(Fun f) noexcept:
-            ScopeGuardBase(),
+//            ScopeGuardBase(),
             mF(std::move(f))
             { }
 
         ScopeGuard(ScopeGuard&& rhs) noexcept :
-            ScopeGuardBase(std::move(rhs)),
+//            ScopeGuardBase(std::move(rhs)),
             mF(std::move(rhs.mF))
             { }
+        
+        void cancel() noexcept
+        { mActive = false; }
 
         ~ScopeGuard() noexcept {
             if (mActive) {
@@ -51,12 +56,13 @@ namespace scope {
 
     private:
         Fun mF;
+        bool mActive = true;
     };
 
     template<class Fun> ScopeGuard<Fun> guard(Fun f) {
         return ScopeGuard<Fun>(std::move(f));
     }
-
+    #define DEFER(name,f) auto name = scope::guard(f)
 // End scopeguards
 }
 

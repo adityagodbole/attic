@@ -166,7 +166,7 @@ namespace foo {
         // it. We have to move it into the tuple.
         // Also, if you are returning a variable directly in the return, C++
         // guarantees that all objects are "moved" out.
-        return {move(f), error};
+        return {move(f), nullptr};
     }
 }
 
@@ -188,13 +188,15 @@ int main()
         return 1;
     }
 
-    // Finally, final_action blocks use RAII to cleanup variables with "commit" symantics
+    // Finally, DEFER statements use RAII to cleanup variables with "commit" symantics
     // When the function ends, the lambda passed to the final_action is run 
     // (even when an exception is thrown later in the function)
 
-    const auto _f([&] {cerr << "Finally!";});
+    DEFER(rollback, [&] {cerr << "Finally!";});
     /*
     ... any amount of code can go here
     */
+   // The above code suceeded. We don't want to rollback
+   rollback.cancel();
     return 0;
 }
